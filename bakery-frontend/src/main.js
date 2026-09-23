@@ -4,24 +4,24 @@ import { initCart, addToCart, refreshCart, onOrderPlaced } from './cart.js';
 import { initOrders, loadOrders } from './orders.js';
 import { initAdmin } from './admin.js';
 import { showToast } from './toast.js';
-import { curateCatalog, enrichProduct, getProductImage, MAX_FRONTEND_PRODUCTS } from './catalog_data.js';
+import { curateCatalog, enrichProduct, getProductImage, formatCurrency, MAX_FRONTEND_PRODUCTS } from './catalog_data.js';
 
 let currentCategory = 'all';
 let currentSearch = '';
-let currentMaxPrice = 60;
+let currentMaxPrice = 2000;
 let isShowingPopular = false;
 let allLoadedProducts = [];
 let filteredProducts = [];
 let currentPage = 1;
 const PAGE_SIZE = 24;
 
-// Fallback demo catalog if backend is fresh or empty
+// Fallback demo catalog if backend is fresh or empty (with Indian Rupee prices)
 const DEMO_FALLBACK_PRODUCTS = [
   {
     id: 1,
     name: 'Artisan Butter Croissant',
     category: 'Breads',
-    price: 3.5,
+    price: 160,
     stock: 24,
     description: 'Freshly baked French flaky golden butter croissant with delicate crisp layers.',
   },
@@ -29,7 +29,7 @@ const DEMO_FALLBACK_PRODUCTS = [
     id: 2,
     name: 'Decadent Dark Chocolate Cake',
     category: 'Cakes',
-    price: 28.0,
+    price: 1150,
     stock: 8,
     description: 'Multi-layer Belgian dark chocolate sponge layered with velvety ganache and fresh raspberries.',
   },
@@ -37,7 +37,7 @@ const DEMO_FALLBACK_PRODUCTS = [
     id: 3,
     name: 'Rustic Sourdough Boule',
     category: 'Breads',
-    price: 6.5,
+    price: 280,
     stock: 15,
     description: 'Naturally fermented 36-hour slow-rise artisan sourdough with a blistered crisp ear crust.',
   },
@@ -45,7 +45,7 @@ const DEMO_FALLBACK_PRODUCTS = [
     id: 4,
     name: 'Sea Salt Chocolate Chunk Cookies',
     category: 'Cookies',
-    price: 4.25,
+    price: 160,
     stock: 30,
     description: 'Soft & chewy gourmet cookies packed with melted chocolate pools and Maldon sea salt flakes.',
   },
@@ -53,7 +53,7 @@ const DEMO_FALLBACK_PRODUCTS = [
     id: 5,
     name: 'Berry Chantilly Cream Cake',
     category: 'Cakes',
-    price: 32.0,
+    price: 1350,
     stock: 6,
     description: 'Light vanilla sponge cake layered with delicate almond mascarpone chantilly and wild berries.',
   },
@@ -61,7 +61,7 @@ const DEMO_FALLBACK_PRODUCTS = [
     id: 6,
     name: 'Golden Saffron Brioche',
     category: 'Breads',
-    price: 5.75,
+    price: 250,
     stock: 12,
     description: 'Pillow-soft, buttery enriched brioche loaf infused with aromatic saffron strands.',
   },
@@ -168,7 +168,7 @@ function setupUIEventListeners() {
   if (priceSlider && priceDisplay) {
     priceSlider.addEventListener('input', (e) => {
       currentMaxPrice = e.target.value;
-      priceDisplay.textContent = `$${currentMaxPrice}`;
+      priceDisplay.textContent = formatCurrency(currentMaxPrice);
       currentPage = 1;
       applyFiltersAndRender();
     });
@@ -472,7 +472,7 @@ function renderProductCards(products) {
         <div class="product-body">
           <div class="product-header">
             <h3 class="product-title">${escapeHtml(product.name)}</h3>
-            <span class="product-price">$${parseFloat(product.price).toFixed(2)}</span>
+            <span class="product-price">${formatCurrency(product.price)}</span>
           </div>
           <p class="product-desc">${escapeHtml(product.description || 'Artisanal bake prepared with premium organic ingredients.')}</p>
           

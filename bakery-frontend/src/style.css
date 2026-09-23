@@ -132,26 +132,172 @@ button {
   gap: 20px;
 }
 
+/* Interactive Artisan Logo */
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-family: var(--font-serif);
-  font-size: 1.55rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
+  gap: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--transition-fast);
 }
 
-.brand-icon {
-  font-size: 1.9rem;
+.brand-logo:active {
+  transform: scale(0.97);
+}
+
+.logo-crest {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 35%, #FFFDF9 0%, #F5EDE0 70%, #E8DAC6 100%);
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.15);
+  transition: all var(--transition-smooth);
+  flex-shrink: 0;
+}
+
+.brand-logo:hover .logo-crest {
+  transform: translateY(-2px) scale(1.07) rotate(4deg);
+  box-shadow: 0 8px 26px rgba(217, 119, 6, 0.4), inset 0 0 12px rgba(245, 158, 11, 0.25);
+  border-color: #F59E0B;
+}
+
+.logo-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.crest-bg {
+  fill: #FFFDF9;
+}
+
+/* Animated Steam Wisps */
+.steam-group {
+  opacity: 0.75;
+  transition: opacity var(--transition-smooth);
+}
+
+.brand-logo:hover .steam-group {
+  opacity: 1;
+}
+
+.steam-wisp {
+  animation: steamRise 2.2s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.steam-1 {
+  animation-delay: 0s;
+}
+
+.steam-2 {
+  animation-delay: 0.7s;
+}
+
+.steam-3 {
+  animation-delay: 1.4s;
+}
+
+@keyframes steamRise {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scaleX(0.85);
+  }
+  35% {
+    opacity: 0.95;
+  }
+  75% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scaleX(1.35);
+  }
+}
+
+/* Wheat Sheaves Sway on Hover */
+.wheat-sheaf {
+  transition: transform var(--transition-smooth);
+  transform-origin: bottom center;
+}
+
+.brand-logo:hover .wheat-left {
+  animation: wheatSwayLeft 1.6s ease-in-out infinite alternate;
+}
+
+.brand-logo:hover .wheat-right {
+  animation: wheatSwayRight 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes wheatSwayLeft {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-6deg); }
+}
+
+@keyframes wheatSwayRight {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(6deg); }
+}
+
+/* Brand Typography */
+.brand-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-title-main {
+  font-family: var(--font-serif);
+  font-size: 1.48rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #261B12 0%, #635345 50%, #92400E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all var(--transition-smooth);
+}
+
+.brand-logo:hover .brand-title-main {
+  background: linear-gradient(135deg, #B45309 0%, #D97706 50%, #78350F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-sparkle {
+  font-size: 0.95rem;
   display: inline-block;
-  transform-origin: center;
   transition: transform var(--transition-smooth);
 }
 
-.brand-logo:hover .brand-icon {
-  transform: rotate(-12deg) scale(1.1);
+.brand-logo:hover .brand-sparkle {
+  animation: sparkleTwinkle 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleTwinkle {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.35) rotate(25deg); }
+}
+
+.brand-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent-caramel);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .brand-tag {
@@ -1442,10 +1588,32 @@ button {
 }
 
 .footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-logo-icon {
+  font-size: 1.6rem;
+}
+
+.footer-brand-name {
   font-family: var(--font-serif);
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #FFF;
+}
+
+.footer-brand-desc {
+  font-size: 0.82rem;
+  color: #9C8E82;
+  max-width: 420px;
 }
 
 .footer-copy {
@@ -1483,5 +1651,18 @@ button {
 
   .user-name {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-subtitle {
+    display: none;
+  }
+  .brand-title-main {
+    font-size: 1.25rem;
+  }
+  .logo-crest {
+    width: 44px;
+    height: 44px;
   }
 }

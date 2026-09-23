@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { isAdmin } from './auth.js';
 import { showToast } from './toast.js';
-import { curateCatalog, MAX_FRONTEND_PRODUCTS } from './catalog_data.js';
+import { curateCatalog, MAX_FRONTEND_PRODUCTS, formatCurrency } from './catalog_data.js';
 
 let allCategories = [];
 let allAdminProducts = [];
@@ -133,7 +133,7 @@ async function loadAnalytics() {
 
   try {
     const overview = await api.getOverview();
-    if (kpiRev) kpiRev.textContent = `$${parseFloat(overview.total_revenue || 0).toFixed(2)}`;
+    if (kpiRev) kpiRev.textContent = formatCurrency(overview.total_revenue || 0);
     if (kpiOrders) kpiOrders.textContent = overview.completed_orders || 0;
     if (kpiCustomers) kpiCustomers.textContent = overview.total_customers || 0;
     if (kpiLowStock) kpiLowStock.textContent = overview.low_stock_products || 0;
@@ -151,7 +151,7 @@ async function loadAnalytics() {
             <td><strong>#${idx + 1}</strong> ${escapeHtml(p.name)}</td>
             <td><span class="badge badge-subtle">${escapeHtml(p.category)}</span></td>
             <td>${p.units_sold} units</td>
-            <td><strong>$${parseFloat(p.total_revenue).toFixed(2)}</strong></td>
+            <td><strong>${formatCurrency(p.total_revenue)}</strong></td>
           </tr>
         `
           )
@@ -171,7 +171,7 @@ async function loadAnalytics() {
           <tr>
             <td><strong>${m.month}</strong></td>
             <td>${m.total_orders} orders</td>
-            <td><strong>$${parseFloat(m.gross_revenue).toFixed(2)}</strong></td>
+            <td><strong>${formatCurrency(m.gross_revenue)}</strong></td>
           </tr>
         `
           )
@@ -207,7 +207,7 @@ async function loadAdminProducts(onCatalogMutated) {
           <small class="text-muted">${escapeHtml(p.description || '')}</small>
         </td>
         <td><span class="badge badge-subtle">${escapeHtml(p.category || '')}</span></td>
-        <td>$${parseFloat(p.price).toFixed(2)}</td>
+        <td>${formatCurrency(p.price)}</td>
         <td>
           <span class="stock-pill ${p.stock < 5 ? 'stock-low' : 'stock-ok'}">
             ${p.stock} in stock
@@ -272,7 +272,7 @@ async function loadAdminOrders() {
         <tr>
           <td><strong>#${o.id}</strong></td>
           <td>User #${o.user_id}</td>
-          <td>$${parseFloat(o.total_amount).toFixed(2)}</td>
+          <td>${formatCurrency(o.total_amount)}</td>
           <td>
             <select class="admin-status-select" data-order-id="${o.id}">
               ${optionsHtml}

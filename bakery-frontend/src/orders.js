@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { isLoggedIn, openAuthModal } from './auth.js';
 import { showToast } from './toast.js';
-import { enrichProduct, PRODUCT_REGISTRY, inferCategory } from './catalog_data.js';
+import { enrichProduct, PRODUCT_REGISTRY, inferCategory, formatCurrency } from './catalog_data.js';
 
 let ordersList = [];
 
@@ -89,7 +89,7 @@ export async function loadOrders() {
           </div>
 
           <div class="order-card-footer">
-            <span class="order-total-label">Total: <strong>$${parseFloat(order.total_amount).toFixed(2)}</strong></span>
+            <span class="order-total-label">Total: <strong>${formatCurrency(order.total_amount)}</strong></span>
             <button class="btn btn-outline btn-sm view-order-details-btn" data-id="${order.id}">
               View Details
             </button>
@@ -141,7 +141,7 @@ async function toggleOrderDetails(orderId, btn) {
               return `
             <li>
               <span class="item-name">${escapeHtml(enriched.name)} &times; ${item.quantity}</span>
-              <span class="item-subtotal">$${parseFloat(item.subtotal || item.price * item.quantity).toFixed(2)}</span>
+              <span class="item-subtotal">${formatCurrency(item.subtotal || item.price * item.quantity)}</span>
             </li>
           `;
             })

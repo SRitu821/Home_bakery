@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { isLoggedIn, openAuthModal } from './auth.js';
 import { showToast } from './toast.js';
-import { enrichProduct, PRODUCT_REGISTRY, inferCategory } from './catalog_data.js';
+import { enrichProduct, PRODUCT_REGISTRY, inferCategory, formatCurrency } from './catalog_data.js';
 
 let cartItems = [];
 let cartTotal = 0;
@@ -188,7 +188,7 @@ function renderCart() {
   }
 
   if (cartTotalEl) {
-    cartTotalEl.textContent = `$${cartTotal.toFixed(2)}`;
+    cartTotalEl.textContent = formatCurrency(cartTotal);
   }
 
   if (checkoutBtn) {
@@ -223,7 +223,7 @@ function renderCart() {
       <img src="${enriched.image_url}" alt="${escapeHtml(enriched.name)}" class="cart-item-thumb" />
       <div class="cart-item-details">
         <h4 class="cart-item-title">${escapeHtml(enriched.name)}</h4>
-        <span class="cart-item-price">$${unitPrice.toFixed(2)} each</span>
+        <span class="cart-item-price">${formatCurrency(unitPrice)} each</span>
         <div class="cart-item-controls">
           <div class="qty-stepper">
             <button class="qty-btn btn-minus" data-id="${item.item_id}" data-qty="${item.quantity - 1}" title="Decrease">−</button>
@@ -238,7 +238,7 @@ function renderCart() {
         </div>
       </div>
       <div class="cart-item-subtotal">
-        $${subtotal.toFixed(2)}
+        ${formatCurrency(subtotal)}
       </div>
     </div>
   `;
