@@ -540,6 +540,32 @@ button {
   border-style: solid;
 }
 
+.catalog-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.catalog-count-pill {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent-caramel);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalog-pagination-hint {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 /* ==========================================================================
    Products Grid & Cards
    ========================================================================== */
@@ -720,6 +746,63 @@ button {
 }
 
 /* ==========================================================================
+   Catalog Pagination Controls
+   ========================================================================== */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 40px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--surface-alt);
+  border-color: var(--accent-gold);
+  color: var(--accent-caramel);
+  transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #FFF;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pagination-ellipsis {
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* ==========================================================================
    Slide-over Cart Drawer
    ========================================================================== */
 .cart-drawer-backdrop {
@@ -799,12 +882,21 @@ button {
 .cart-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 14px;
   background: #FFF;
   border: 1px solid var(--border-light);
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
+}
+
+.cart-item-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #EAE3D9;
 }
 
 .cart-item-details {

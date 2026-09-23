@@ -1,6 +1,7 @@
 import { api } from './api.js';
 import { isLoggedIn, openAuthModal } from './auth.js';
 import { showToast } from './toast.js';
+import { enrichProduct, PRODUCT_REGISTRY, inferCategory } from './catalog_data.js';
 
 let ordersList = [];
 
@@ -131,14 +132,19 @@ async function toggleOrderDetails(orderId, btn) {
         <h5>Ordered Items:</h5>
         <ul>
           ${items
-            .map(
-              (item) => `
+            .map((item) => {
+              const enriched = PRODUCT_REGISTRY.get(item.product_id) || enrichProduct({
+                id: item.product_id,
+                name: item.name,
+                category: inferCategory(item.product_id),
+              });
+              return `
             <li>
-              <span class="item-name">${escapeHtml(item.name)} &times; ${item.quantity}</span>
+              <span class="item-name">${escapeHtml(enriched.name)} &times; ${item.quantity}</span>
               <span class="item-subtotal">$${parseFloat(item.subtotal || item.price * item.quantity).toFixed(2)}</span>
             </li>
-          `
-            )
+          `;
+            })
             .join('')}
         </ul>
       </div>

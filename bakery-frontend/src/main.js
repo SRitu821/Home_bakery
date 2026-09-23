@@ -4,44 +4,18 @@ import { initCart, addToCart, refreshCart, onOrderPlaced } from './cart.js';
 import { initOrders, loadOrders } from './orders.js';
 import { initAdmin } from './admin.js';
 import { showToast } from './toast.js';
+import { curateCatalog, enrichProduct, getProductImage, MAX_FRONTEND_PRODUCTS } from './catalog_data.js';
 
 let currentCategory = 'all';
 let currentSearch = '';
-let currentMaxPrice = 50;
+let currentMaxPrice = 60;
 let isShowingPopular = false;
 let allLoadedProducts = [];
+let filteredProducts = [];
+let currentPage = 1;
+const PAGE_SIZE = 24;
 
-// Curated image mapping for bakery items
-const PRODUCT_IMAGE_MAP = {
-  croissant: '/assets/croissant.jpg',
-  pastry: '/assets/croissant.jpg',
-  cake: '/assets/chocolate_cake.jpg',
-  chocolate: '/assets/chocolate_cake.jpg',
-  bread: '/assets/sourdough_bread.jpg',
-  sourdough: '/assets/sourdough_bread.jpg',
-  cookie: '/assets/cookies.jpg',
-  cookies: '/assets/cookies.jpg',
-};
-
-function getProductImage(product) {
-  const nameLower = (product.name || '').toLowerCase();
-  const catLower = (product.category || '').toLowerCase();
-
-  for (const [keyword, imgUrl] of Object.entries(PRODUCT_IMAGE_MAP)) {
-    if (nameLower.includes(keyword) || catLower.includes(keyword)) {
-      return imgUrl;
-    }
-  }
-
-  // Category fallback
-  if (catLower.includes('cake')) return '/assets/chocolate_cake.jpg';
-  if (catLower.includes('bread')) return '/assets/sourdough_bread.jpg';
-  if (catLower.includes('cookie')) return '/assets/cookies.jpg';
-
-  return '/assets/croissant.jpg';
-}
-
-// Fallback demo catalog if the backend database is fresh or empty
+// Fallback demo catalog if backend is fresh or empty
 const DEMO_FALLBACK_PRODUCTS = [
   {
     id: 1,
@@ -182,8 +156,9 @@ function setupUIEventListeners() {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         currentSearch = e.target.value.trim();
-        loadProducts();
-      }, 300);
+        currentPage = 1;
+        applyFiltersAndRender();
+      }, 250);
     });
   }
 
@@ -194,9 +169,8 @@ function setupUIEventListeners() {
     priceSlider.addEventListener('input', (e) => {
       currentMaxPrice = e.target.value;
       priceDisplay.textContent = `$${currentMaxPrice}`;
-    });
-    priceSlider.addEventListener('change', () => {
-      loadProducts();
+      currentPage = 1;
+      applyFiltersAndRender();
     });
   }
 
@@ -213,6 +187,7 @@ function setupUIEventListeners() {
         currentCategory = 'all';
         document.querySelector('.cat-pill[data-category="all"]')?.classList.add('active');
       }
+      currentPage = 1;
       loadProducts();
     });
   }
@@ -260,7 +235,8 @@ async function loadCategories() {
         isShowingPopular = false;
 
         currentCategory = pill.getAttribute('data-category');
-        loadProducts();
+        currentPage = 1;
+        applyFiltersAndRender();
       });
     });
   } catch (err) {
@@ -278,62 +254,192 @@ function getCategoryEmoji(catName) {
 
 async function loadProducts() {
   const grid = document.getElementById('products-grid');
-  const emptyState = document.getElementById('products-empty-state');
   if (!grid) return;
 
   grid.innerHTML = `
     <div class="grid-loader">
       <span class="spinner"></span>
-      <p>Baking fresh selections...</p>
+      <p>Baking fresh artisanal selections...</p>
     </div>
   `;
 
   try {
-    let products = [];
+    let rawList = [];
 
     if (isShowingPopular) {
       const popRes = await api.getPopularProducts();
-      products = popRes.data || [];
+      rawList = popRes.data || [];
     } else {
-      const filters = {};
-      if (currentCategory && currentCategory !== 'all') {
-        filters.category = currentCategory;
-      }
-      if (currentSearch) {
-        filters.search = currentSearch;
-      }
-      if (currentMaxPrice) {
-        filters.maxPrice = currentMaxPrice;
-      }
-
-      products = await api.getProducts(filters);
+      rawList = await api.getProducts();
     }
 
-    // Fallback if empty and no specific query was made
-    if ((!products || products.length === 0) && !currentSearch && currentCategory === 'all') {
-      products = DEMO_FALLBACK_PRODUCTS;
+    if (!rawList || rawList.length === 0) {
+      rawList = DEMO_FALLBACK_PRODUCTS;
     }
 
-    allLoadedProducts = products;
-    renderProductCards(products);
+    // Curate and bound the catalog strictly to 200-250 items (specifically 225 items)
+    allLoadedProducts = curateCatalog(rawList, MAX_FRONTEND_PRODUCTS);
+    applyFiltersAndRender();
   } catch (err) {
     console.warn('API error, falling back to local demo catalog', err);
-    // Filter demo catalog locally so user can still interact!
-    let filtered = DEMO_FALLBACK_PRODUCTS;
-    if (currentCategory && currentCategory !== 'all' && currentCategory !== 'popular') {
-      filtered = filtered.filter((p) => p.category.toLowerCase() === currentCategory.toLowerCase());
-    }
-    if (currentSearch) {
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
-          (p.description && p.description.toLowerCase().includes(currentSearch.toLowerCase()))
-      );
-    }
-    filtered = filtered.filter((p) => p.price <= parseFloat(currentMaxPrice));
+    allLoadedProducts = curateCatalog(DEMO_FALLBACK_PRODUCTS, MAX_FRONTEND_PRODUCTS);
+    applyFiltersAndRender();
+  }
+}
 
-    allLoadedProducts = filtered;
-    renderProductCards(filtered);
+function applyFiltersAndRender() {
+  let list = [...allLoadedProducts];
+
+  // Category filter
+  if (currentCategory && currentCategory !== 'all' && currentCategory !== 'popular') {
+    list = list.filter((p) => (p.category || '').toLowerCase() === currentCategory.toLowerCase());
+  }
+
+  // Live search keyword filter
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q))
+    );
+  }
+
+  // Max price slider filter
+  if (currentMaxPrice) {
+    list = list.filter((p) => p.price <= parseFloat(currentMaxPrice));
+  }
+
+  filteredProducts = list;
+
+  // Pagination calculation
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIdx = (currentPage - 1) * PAGE_SIZE;
+  const endIdx = Math.min(startIdx + PAGE_SIZE, totalItems);
+  const pageItems = filteredProducts.slice(startIdx, endIdx);
+
+  // Update summary badge & pagination hint
+  updateCatalogSummary(totalItems, startIdx, endIdx, currentPage, totalPages);
+
+  // Render cards for the current page
+  renderProductCards(pageItems);
+
+  // Render pagination buttons
+  renderPagination(totalPages);
+}
+
+function updateCatalogSummary(totalItems, startIdx, endIdx, page, totalPages) {
+  const badge = document.getElementById('catalog-count-badge');
+  const hint = document.getElementById('catalog-page-hint');
+
+  const catLabel =
+    currentCategory === 'all'
+      ? 'Artisanal Bakes'
+      : currentCategory === 'popular'
+      ? 'Best Sellers'
+      : `${currentCategory}`;
+
+  if (badge) {
+    badge.textContent = `🥐 Showing ${totalItems} ${catLabel}`;
+  }
+
+  if (hint) {
+    if (totalItems === 0) {
+      hint.textContent = 'No matching items';
+    } else {
+      hint.textContent = `Items ${startIdx + 1}–${endIdx} (Page ${page} of ${totalPages})`;
+    }
+  }
+}
+
+function renderPagination(totalPages) {
+  const container = document.getElementById('pagination-controls');
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = `
+    <button class="pagination-btn" id="pg-prev" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page">
+      &laquo; Prev
+    </button>
+  `;
+
+  // Smart page numbers windowing
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+
+  pages.forEach((p) => {
+    if (p === '...') {
+      html += `<span class="pagination-ellipsis">&hellip;</span>`;
+    } else {
+      html += `
+        <button class="pagination-btn ${p === currentPage ? 'active' : ''}" data-page="${p}" aria-label="Go to page ${p}">
+          ${p}
+        </button>
+      `;
+    }
+  });
+
+  html += `
+    <button class="pagination-btn" id="pg-next" ${currentPage === totalPages ? 'disabled' : ''} aria-label="Next page">
+      Next &raquo;
+    </button>
+  `;
+
+  container.innerHTML = html;
+
+  // Event handlers
+  const prevBtn = document.getElementById('pg-prev');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        applyFiltersAndRender();
+        scrollToCatalogTop();
+      }
+    });
+  }
+
+  const nextBtn = document.getElementById('pg-next');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        applyFiltersAndRender();
+        scrollToCatalogTop();
+      }
+    });
+  }
+
+  container.querySelectorAll('.pagination-btn[data-page]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const p = parseInt(btn.getAttribute('data-page'), 10);
+      if (p && p !== currentPage) {
+        currentPage = p;
+        applyFiltersAndRender();
+        scrollToCatalogTop();
+      }
+    });
+  });
+}
+
+function scrollToCatalogTop() {
+  const section = document.getElementById('catalog-section');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -353,7 +459,7 @@ function renderProductCards(products) {
   grid.innerHTML = products
     .map((product) => {
       const isOutOfStock = product.stock <= 0;
-      const imageUrl = getProductImage(product);
+      const imageUrl = product.image_url || getProductImage(product);
 
       return `
       <article class="product-card ${isOutOfStock ? 'out-of-stock' : ''}" data-id="${product.id}">

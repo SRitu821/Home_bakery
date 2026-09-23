@@ -60,6 +60,7 @@
     </div>
   </header>
 
+  
   <!-- =========================================================================
        Hero Banner Section
        ========================================================================= -->
@@ -126,12 +127,23 @@
           🔥 Best Sellers (Redis Cached)
         </button>
       </div>
+
+      <!-- Catalog Live Summary Bar -->
+      <div class="catalog-summary-bar">
+        <span class="catalog-count-pill" id="catalog-count-badge">🥐 Showing 225 Artisanal Bakes</span>
+        <span class="catalog-pagination-hint" id="catalog-page-hint">Page 1 of 10</span>
+      </div>
     </div>
 
     <!-- Products Grid -->
     <div class="products-grid" id="products-grid">
       <!-- Dynamically populated product cards -->
     </div>
+
+    <!-- Pagination Controls -->
+    <nav class="pagination-container" id="pagination-controls" aria-label="Catalog pagination">
+      <!-- Dynamically injected pagination buttons -->
+    </nav>
 
     <!-- Products Empty State -->
     <div class="empty-state hidden" id="products-empty-state">

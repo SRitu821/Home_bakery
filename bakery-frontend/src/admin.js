@@ -1,6 +1,7 @@
 import { api } from './api.js';
 import { isAdmin } from './auth.js';
 import { showToast } from './toast.js';
+import { curateCatalog, MAX_FRONTEND_PRODUCTS } from './catalog_data.js';
 
 let allCategories = [];
 let allAdminProducts = [];
@@ -188,7 +189,8 @@ async function loadAdminProducts(onCatalogMutated) {
 
   try {
     container.innerHTML = '<tr><td colspan="6">Loading catalog...</td></tr>';
-    allAdminProducts = await api.getProducts();
+    const rawProducts = await api.getProducts();
+    allAdminProducts = curateCatalog(rawProducts, MAX_FRONTEND_PRODUCTS);
 
     if (!allAdminProducts || allAdminProducts.length === 0) {
       container.innerHTML = '<tr><td colspan="6">No products found.</td></tr>';

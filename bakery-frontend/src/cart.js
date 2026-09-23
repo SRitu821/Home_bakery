@@ -1,6 +1,7 @@
 import { api } from './api.js';
 import { isLoggedIn, openAuthModal } from './auth.js';
 import { showToast } from './toast.js';
+import { enrichProduct, PRODUCT_REGISTRY, inferCategory } from './catalog_data.js';
 
 let cartItems = [];
 let cartTotal = 0;
@@ -49,7 +50,15 @@ export async function refreshCart() {
   try {
     const data = await api.getCart();
     cartItems = data.items || [];
-    cartTotal = parseFloat(data.total_amount) || 0;
+    cartTotal = cartItems.reduce((sum, item) => {
+      const enriched = PRODUCT_REGISTRY.get(item.product_id) || enrichProduct({
+        id: item.product_id,
+        name: item.name,
+        category: inferCategory(item.product_id),
+        price: item.price,
+      });
+      return sum + (parseFloat(enriched.price) * item.quantity);
+    }, 0);
     renderCart();
   } catch (err) {
     // If not authenticated or error, reset
@@ -67,6 +76,9 @@ export async function addToCart(product, quantity = 1) {
   }
 
   try {
+    if (product && product.id) {
+      PRODUCT_REGISTRY.set(product.id, product);
+    }
     await api.addToCart(product.id, quantity);
     showToast(`Added ${quantity}x "${product.name}" to cart! 🛒`, 'success');
     await refreshCart();
@@ -194,12 +206,24 @@ function renderCart() {
   if (emptyCartMsg) emptyCartMsg.classList.add('hidden');
 
   cartList.innerHTML = cartItems
-    .map(
-      (item) => `
+    .map((item) => {
+      const enriched = PRODUCT_REGISTRY.get(item.product_id) || enrichProduct({
+        id: item.product_id,
+        name: item.name,
+        category: item.category || inferCategory(item.product_id),
+        price: item.price,
+        stock: item.stock,
+      });
+
+      const unitPrice = parseFloat(enriched.price || item.price);
+      const subtotal = unitPrice * item.quantity;
+
+      return `
     <div class="cart-item" data-item-id="${item.item_id}">
+      <img src="${enriched.image_url}" alt="${escapeHtml(enriched.name)}" class="cart-item-thumb" />
       <div class="cart-item-details">
-        <h4 class="cart-item-title">${escapeHtml(item.name)}</h4>
-        <span class="cart-item-price">$${parseFloat(item.price).toFixed(2)} each</span>
+        <h4 class="cart-item-title">${escapeHtml(enriched.name)}</h4>
+        <span class="cart-item-price">$${unitPrice.toFixed(2)} each</span>
         <div class="cart-item-controls">
           <div class="qty-stepper">
             <button class="qty-btn btn-minus" data-id="${item.item_id}" data-qty="${item.quantity - 1}" title="Decrease">−</button>
@@ -214,11 +238,11 @@ function renderCart() {
         </div>
       </div>
       <div class="cart-item-subtotal">
-        $${parseFloat(item.subtotal).toFixed(2)}
+        $${subtotal.toFixed(2)}
       </div>
     </div>
-  `
-    )
+  `;
+    })
     .join('');
 
   // Attach event listeners to quantity buttons and remove buttons

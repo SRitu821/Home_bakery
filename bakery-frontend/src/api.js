@@ -115,8 +115,14 @@ export const api = {
   getProducts(filters = {}) {
     const params = new URLSearchParams();
     if (filters.category) params.append('category', filters.category);
-    if (filters.minPrice) params.append('min_price', filters.minPrice);
-    if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+    if (filters.minPrice) {
+      params.append('min_price', filters.minPrice);
+      params.append('minPrice', filters.minPrice);
+    }
+    if (filters.maxPrice) {
+      params.append('max_price', filters.maxPrice);
+      params.append('maxPrice', filters.maxPrice);
+    }
     if (filters.search) params.append('search', filters.search);
 
     const query = params.toString() ? `?${params.toString()}` : '';
