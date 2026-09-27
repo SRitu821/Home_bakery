@@ -15,8 +15,9 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_USER = os.getenv("DB_USER", "bakery_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "bakery123")
 DB_NAME = os.getenv("DB_NAME", "bakery_db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-conninfo = f"host={DB_HOST} port={DB_PORT} user={DB_USER} password={DB_PASSWORD} dbname={DB_NAME}"
+conninfo = DATABASE_URL if DATABASE_URL else f"host={DB_HOST} port={DB_PORT} user={DB_USER} password={DB_PASSWORD} dbname={DB_NAME}"
 
 import atexit
 

@@ -1,6 +1,7 @@
 // API client for Home Bakery backend
 const TOKEN_KEY = 'home_bakery_token';
 const USER_KEY = 'home_bakery_user';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 export const api = {
   getToken() {
@@ -49,7 +50,8 @@ export const api = {
     }
 
     try {
-      const res = await fetch(path, {
+      const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+      const res = await fetch(url, {
         ...options,
         headers,
       });

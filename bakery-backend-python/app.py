@@ -12,6 +12,9 @@ from routes import (
 )
 from controllers.product_controller import get_popular_products
 
+import os
+from fastapi.middleware.cors import CORSMiddleware
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("app")
 
@@ -20,6 +23,29 @@ app = FastAPI(
     description="A robust, production-ready RESTful backend ordering system built with Python, FastAPI, and PostgreSQL.",
     version="1.0.0",
 )
+
+# Enable CORS for frontend clients (Vercel, localhost, etc.)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def startup_db_init():
+    try:
+        from db.connection import query
+        schema_path = os.path.join(os.path.dirname(__file__), "db", "schema.sql")
+        if os.path.exists(schema_path):
+            with open(schema_path, "r", encoding="utf-8") as f:
+                schema_sql = f.read()
+            query(schema_sql)
+            logger.info("[DB] Database schema initialized or verified.")
+    except Exception as e:
+        logger.warning(f"[DB] Auto-init schema note: {e}")
 
 
 # Health check
