@@ -1,0 +1,7 @@
+{
+  "name": "home-bakery",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix bakery-frontend run build"
+  }
+}

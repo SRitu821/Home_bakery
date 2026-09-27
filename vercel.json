@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm --prefix bakery-frontend install && npm --prefix bakery-frontend run build",
+  "outputDirectory": "bakery-frontend/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
