@@ -44,6 +44,28 @@ def startup_db_init():
                 schema_sql = f.read()
             query(schema_sql)
             logger.info("[DB] Database schema initialized or verified.")
+
+        # Verify product count
+        count_res = query("SELECT count(*) as count FROM products")
+        if count_res and len(count_res) > 0:
+            total_products = int(count_res[0].get("count", 0))
+            logger.info(f"[DB] Active products count in database: {total_products}")
+            if total_products == 0:
+                seed_sql = """
+                    INSERT INTO products (name, category_id, price, stock, description)
+                    SELECT
+                        'Product #' || g,
+                        c.id,
+                        (60 + (g % 890))::numeric(10,2),
+                        (10 + (g % 40)),
+                        'Artisanal handcrafted bakery selection item #' || g
+                    FROM generate_series(1, 250) AS g
+                    CROSS JOIN LATERAL (
+                        SELECT id FROM categories ORDER BY id OFFSET (g % (SELECT GREATEST(count(*), 1) FROM categories)) LIMIT 1
+                    ) c;
+                """
+                query(seed_sql)
+                logger.info("[DB] Successfully seeded 250 products into database.")
     except Exception as e:
         logger.warning(f"[DB] Auto-init schema note: {e}")
 

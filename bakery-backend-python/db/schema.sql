@@ -64,3 +64,17 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON cart_items(cart_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);
+
+-- Auto-seed 250 artisanal benchmark products if products table is fresh and empty
+INSERT INTO products (name, category_id, price, stock, description)
+SELECT
+    'Product #' || g,
+    c.id,
+    (60 + (g % 890))::numeric(10,2),
+    (10 + (g % 40)),
+    'Artisanal handcrafted bakery selection item #' || g
+FROM generate_series(1, 250) AS g
+CROSS JOIN LATERAL (
+    SELECT id FROM categories ORDER BY id OFFSET (g % (SELECT GREATEST(count(*), 1) FROM categories)) LIMIT 1
+) c
+WHERE NOT EXISTS (SELECT 1 FROM products LIMIT 1);
