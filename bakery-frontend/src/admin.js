@@ -91,6 +91,26 @@ export function initAdmin(onCatalogMutated) {
       }
     });
   }
+
+  // Setup Seed Products Button
+  const seedBtn = document.getElementById('admin-seed-btn');
+  if (seedBtn) {
+    seedBtn.addEventListener('click', async () => {
+      try {
+        seedBtn.disabled = true;
+        seedBtn.innerHTML = '<span class="spinner"></span> Seeding...';
+        const res = await api.seedProducts();
+        showToast(res.message || 'Seeded 250 products!', 'success');
+        await loadAdminProducts(onCatalogMutated);
+        if (onCatalogMutated) onCatalogMutated();
+      } catch (err) {
+        showToast(err.message || 'Failed to seed products', 'error');
+      } finally {
+        seedBtn.disabled = false;
+        seedBtn.textContent = '🌱 Seed 250 Artisanal Products';
+      }
+    });
+  }
 }
 
 export async function openAdminModal(onCatalogMutated) {

@@ -29,6 +29,12 @@ async def popular_products():
     return get_popular_products()
 
 
+@router.get("/seed")
+async def seed_products():
+    from controllers.product_controller import seed_database_products
+    return seed_database_products()
+
+
 @router.get("/{product_id}")
 async def single_product(product_id: str):
     return get_product_by_id(product_id)

@@ -95,7 +95,10 @@ class TransactionClient:
     def query(self, text: str, params: Optional[List[Any]] = None) -> QueryResult:
         sql, normalized_params = _normalize_query(text, params)
         with self.conn.cursor() as cur:
-            cur.execute(sql, normalized_params)
+            if normalized_params:
+                cur.execute(sql, normalized_params)
+            else:
+                cur.execute(sql)
             if cur.description:
                 rows = cur.fetchall()
                 return QueryResult(rows, cur.rowcount)
@@ -130,7 +133,10 @@ def query(text: str, params: Optional[List[Any]] = None) -> QueryResult:
     sql, normalized_params = _normalize_query(text, params)
     with pool.connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, normalized_params)
+            if normalized_params:
+                cur.execute(sql, normalized_params)
+            else:
+                cur.execute(sql)
             if cur.description:
                 rows = cur.fetchall()
                 return QueryResult(rows, cur.rowcount)

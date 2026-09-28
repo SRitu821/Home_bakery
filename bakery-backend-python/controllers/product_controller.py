@@ -8,6 +8,48 @@ from config.cache import cache
 logger = logging.getLogger("product_controller")
 
 
+def ensure_products_seeded(force: bool = False):
+    try:
+        # 1. Ensure categories exist
+        db.query("""
+            INSERT INTO categories (name) VALUES ('Cakes'), ('Cookies'), ('Breads')
+            ON CONFLICT (name) DO NOTHING;
+        """)
+
+        # 2. Check current product count
+        cnt = db.query("SELECT count(*) as count FROM products")
+        current_count = int(cnt[0]["count"]) if cnt and len(cnt) > 0 else 0
+
+        if current_count < 100 or force:
+            logger.info(f"[Seed] Products count is {current_count}. Auto-seeding 250 benchmark products...")
+            seed_sql = """
+                INSERT INTO products (name, category_id, price, stock, description)
+                SELECT
+                    'Product #' || g,
+                    c.id,
+                    (60 + (g % 890))::numeric(10,2),
+                    (15 + (g % 35)),
+                    'Artisanal handcrafted bakery selection item #' || g
+                FROM generate_series(1, 250) AS g
+                CROSS JOIN LATERAL (
+                    SELECT id FROM categories ORDER BY id OFFSET (g % (SELECT GREATEST(count(*), 1) FROM categories)) LIMIT 1
+                ) c
+                ON CONFLICT DO NOTHING;
+            """
+            db.query(seed_sql)
+            logger.info("[Seed] 250 benchmark products successfully seeded!")
+            cache.delete("popular_products")
+    except Exception as e:
+        logger.error(f"[Seed] Error auto-seeding products: {e}")
+
+
+def seed_database_products() -> JSONResponse:
+    ensure_products_seeded(force=True)
+    cnt = db.query("SELECT count(*) as count FROM products")
+    total = int(cnt[0]["count"]) if cnt and len(cnt) > 0 else 0
+    return JSONResponse(status_code=200, content={"message": f"Seeding complete! Database now has {total} products.", "count": total})
+
+
 def get_products(
     category: Optional[str] = None,
     min_price: Optional[str] = None,
@@ -58,6 +100,9 @@ def get_products(
 
     try:
         result = db.query(query_str, params)
+        if len(result.rows) == 0 and not (category or min_price or max_price or search):
+            ensure_products_seeded()
+            result = db.query(query_str, params)
         return JSONResponse(status_code=200, content=result.rows)
     except Exception as err:
         logger.error(f"getProducts error: {err}")

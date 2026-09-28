@@ -139,6 +139,10 @@ export const api = {
     return this.request(`/products/${id}`);
   },
 
+  seedProducts() {
+    return this.request('/products/seed');
+  },
+
   createProduct(productData) {
     return this.request('/products', {
       method: 'POST',
